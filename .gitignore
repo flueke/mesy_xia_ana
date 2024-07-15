@@ -1,0 +1,15 @@
+**/*.swo
+**/*.swp
+.clangd/
+.vscode/
+build/
+build-*/
+CMakeLists.txt.user*
+compile_commands.json
+*.srctrlbm
+*.srctrldb
+*.srctrlprj
+.cache/
+*.o
+runGUI
+*.pcm
