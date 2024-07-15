@@ -12,6 +12,8 @@
 #include <regex>
 #include <stdexcept>
 
+#include <mesytec-mvlc/mesytec-mvlc.h>
+
 #include "TH2D.h"
 #include "TCut.h"
 #include "TGClient.h"
@@ -35,20 +37,20 @@ MyMainFrame::MyMainFrame(const TGWindow* p, UInt_t w, UInt_t h)
 	: TGMainFrame(p, w, h),fCanvasFrame(nullptr) {
 
 	TGHorizontalFrame* fHorFrame = new TGHorizontalFrame(this, w, h);
-	TGCompositeFrame* cframe2 = new TGCompositeFrame(this, w*0.4, h, kVerticalFrame | kFixedSize); 
+	TGCompositeFrame* cframe2 = new TGCompositeFrame(this, w*0.4, h, kVerticalFrame | kFixedSize);
 	TGCompositeFrame* cframe3 = new TGCompositeFrame(this, w*0.5, h, kVerticalFrame | kFixedSize);
 
 	fExportButton = new TGTextButton(cframe2, "&Export");
 	cframe2->AddFrame(fExportButton, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY | kLHintsCenterX | kLHintsCenterY, 10, 10, 5, 2));
 	fExportButton->Connect("Clicked()", "MyMainFrame", this, "ExportFile()");
-		
+
 	fDrawButton = new TGTextButton(cframe2, "&Draw");
 	cframe2->AddFrame(fDrawButton, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY | kLHintsCenterX | kLHintsCenterY, 10, 10, 2, 2));
 	fDrawButton->Connect("Clicked()", "MyMainFrame", this, "DrawFile()");
-	
+
 	fExitButton = new TGTextButton(cframe2, "&Exit", "gApplication->Terminate(0)");
 	cframe2->AddFrame(fExitButton, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY | kLHintsCenterX | kLHintsCenterY, 10, 10, 2, 5));
-	
+
 	TGTextView* fText1 = new TGTextView(cframe3, 250, 35, "2024");
 	fText1->SetBackgroundColor(0xcccccc);
 	cframe3->AddFrame(fText1, new TGLayoutHints(kLHintsExpandX | kLHintsCenterX, 10, 10, 15, 5));
@@ -66,14 +68,14 @@ MyMainFrame::MyMainFrame(const TGWindow* p, UInt_t w, UInt_t h)
 
 	fFilename2 = new TGTextView(cframe3, 250, 35, "None");
 	cframe3->AddFrame(fFilename2, new TGLayoutHints(kLHintsExpandX | kLHintsCenterX, 10, 10, 5, 5));
-	
+
 	TGTextView* fText4 = new TGTextView(cframe3, 250, 35, "Current File:");
 	fText4->SetBackgroundColor(0xcccccc);
 	cframe3->AddFrame(fText4, new TGLayoutHints(kLHintsExpandX | kLHintsCenterX, 10, 10, 5, 5));
-	
+
 	fFilename3 = new TGTextView(cframe3, 250, 35, "None");
 	cframe3->AddFrame(fFilename3, new TGLayoutHints(kLHintsExpandX | kLHintsCenterX, 10, 10, 5, 5));
-	
+
 	fHorFrame->AddFrame(cframe2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 20, 20, 20, 20));
 	fHorFrame->AddFrame(cframe3, new TGLayoutHints(kLHintsRight | kLHintsCenterY, 20, 20, 20, 20));
 	this->AddFrame(fHorFrame, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY | kFixedSize));
@@ -82,11 +84,11 @@ MyMainFrame::MyMainFrame(const TGWindow* p, UInt_t w, UInt_t h)
 	TGFont* font = pool->GetFont("helvetica", 15, kFontWeightNormal, kFontSlantRoman);
 	font->Print();
 	FontStruct_t ft = font->GetFontStruct();
-	
+
 	fExportButton->SetFont(ft);
 	fDrawButton->SetFont(ft);
 	fExitButton->SetFont(ft);
-	
+
 	this->MapSubwindows();
 	this->SetWMSizeHints(w, h, w, h, 1, 1);
 	this->SetWindowName("Experiment Analysis Software Created by CGY");
@@ -101,7 +103,7 @@ MyMainFrame::~MyMainFrame() {
 
 void MyMainFrame::ExportFile() {
 	TGFileInfo fi;
-	const char *fileType[] = {"MVMELSTRUN files","*.mvlclst",0,0};
+	const char *fileType[] = {"mvme/mvlc listfile archives","*.zip",0,0};
 	fi.fFileTypes = fileType;
 	new TGFileDialog(gClient->GetDefaultRoot(), this, kFDOpen, &fi);
 	if (fi.fMultipleSelection && fi.fFileNamesList) {
@@ -135,8 +137,9 @@ void MyMainFrame::ExportFile() {
 	return;
 }
 
+#if 1
 //Extract data from mvlclst
-bool MyMainFrame::restore_ROOT(string name) {
+bool MyMainFrame::restore_ROOT_v0(string name) {
 	UInt_t* buff;
 	UInt_t adc, rt, ra, adc_ch[32], cfd, adc_long, adc_short, adc_long_ch[32], adc_short_ch[32], prev_time, EventSize, i, ChSel, ModSel;
 	ULong64_t tdc, tdc_ch[32], time, temp;
@@ -173,9 +176,9 @@ bool MyMainFrame::restore_ROOT(string name) {
 	tree->Branch("Mod", &ModSel, "mod/i"); //Base Address of the Module
 	tree->Branch("TDC", &temp, "tdc/l"); // time_stamp (include the extend time stamp)
 	tree->Branch("CFD", &cfd, "cfd/i"); // channel time
-	tree->Branch("ADC_Long", &adc_long, "adc_long/i"); // ADC Long (MDPP32-QDC) 
+	tree->Branch("ADC_Long", &adc_long, "adc_long/i"); // ADC Long (MDPP32-QDC)
 	tree->Branch("ADC_Short", &adc_short, "adc_short/i"); // ADC Short (MDPP32-QDC)
-	
+
 	//initialization
 	tdc = 0; time = 0;
 
@@ -204,7 +207,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 			raw->getline(ss, sizeof(ss));
 			raw->getline(ss, sizeof(ss));
 			cout << ss[42] << ss[43] << endl;
-			int m1 = 0; 
+			int m1 = 0;
 			int m2 = 0;
 			if (ss[42] >= 'a' && ss[42] <= 'f') {
 				m1 = ss[42] - 'a' + 10;
@@ -230,7 +233,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 			raw->getline(ss, sizeof(ss));
 			raw->getline(ss, sizeof(ss));
 			cout << ss[42] << ss[43] << endl;
-			int m1 = 0; 
+			int m1 = 0;
 			int m2 = 0;
 			if (ss[42] >= 'a' && ss[42] <= 'f') {
 				m1 = ss[42] - 'a' + 10;
@@ -302,10 +305,10 @@ bool MyMainFrame::restore_ROOT(string name) {
 	prev_time = 0;
 	int Ch;
 
-	//the number of particle of the SCP and QDC 
+	//the number of particle of the SCP and QDC
 	ULong64_t SCP_Num = 0;
 	ULong64_t QDC_Num = 0;
-	
+
 	//int errorNumber = 0;
 	for (int nu1 =0 ; nu1<255;nu1++){
 		for (int nu2 =0 ; nu2<32;nu2++){
@@ -320,7 +323,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 			//MDPP32-SCP
 			adc_ch[i] = 0;
 			tdc_ch[i] = 0;
-			
+
 			adc_find[i] = false;
 			cfd_find[i] = false;
 			tdc_find = false;
@@ -336,7 +339,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 			qdc_cfd_find[i] = false;
 			qdc_tdc_find = false;
 			qdc_tdc_extend_find = false;
-			
+
 			time = 0;  // extend time stamp
 			temp = 0; //time stamp + extend time stamp
 			Ch = 0;  // channel
@@ -359,7 +362,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 			}
 			else {
 				UInt_t EventCount = 0;  //the number we found
-				int adc_Channel = -1; 
+				int adc_Channel = -1;
 				int cfd_Channel = -1;
 				if (ModuleType[ModSel] == 1) {
 					vector<int> temp_string;
@@ -398,9 +401,9 @@ bool MyMainFrame::restore_ROOT(string name) {
 							}
 							continue;
 						}
-						if(buff[0] != 0xfa022002){   // it was found that a series of data words starting with '0xfa022002' appeared in the data event, 
+						if(buff[0] != 0xfa022002){   // it was found that a series of data words starting with '0xfa022002' appeared in the data event,
 						//such as EventSize: 5 EventCount: 5
-						// 10221000 10020b3d 20000000 0 c0026082 f5200000 
+						// 10221000 10020b3d 20000000 0 c0026082 f5200000
 						int tp = buff[0];
 						temp_string.push_back(tp);
 						//this data event belongs to SCP
@@ -408,7 +411,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 							// we found the extend time stamp (maybe???)
 							if (buff[0] >> 28 == 0x2) {
 								UInt_t temp_time = buff[0] & 0xffff;
-								// Prevent the data words such as 
+								// Prevent the data words such as
 								//40 20 18 05 | 10 36 10 00 | 10 16 ff 76 | 2d 03 01 6e | 00 01 00 3a | 10 21 0f 95 | 10 01 ff ec | 20 00 00 00
 								// 20 00 00 00 is overwrote by 2d 03 01 6e
 								// The difference of the extend time stamps must be within 1
@@ -483,7 +486,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 							raw->read((char*)buff, sizeof(unsigned int));
 						}
 					}
-					
+
 					for (i = 0; i < 32; i++) {
 						// We have found everything
 						if (adc_find[i] && cfd_find[i] && tdc_find && tdc_extend_find) {
@@ -499,8 +502,8 @@ bool MyMainFrame::restore_ROOT(string name) {
 							tree->Fill();
 						}
 						else if (((adc_find[i] || cfd_find[i]) && (tdc_find || tdc_extend_find))) { // it found at least two data feature
-							// Error , sometimes, it lost the timestamp . sometimes it lost the ADC or TDC. 
-							// sometimes, the number of the data event is less than the event size 
+							// Error , sometimes, it lost the timestamp . sometimes it lost the ADC or TDC.
+							// sometimes, the number of the data event is less than the event size
 						 	SCP_ERROR++;
 							// debug log
 							if(SCP_ERROR < 100){
@@ -526,7 +529,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 									cout << "tdc extend null!!!"<< endl;
 								}
 								cout << "tdc: "<< tdc << " extend time stamp: " << time << " prev extend time stamp: " << prev_time << endl;
-								
+
 							}
 						}
 						else{
@@ -543,7 +546,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 				else if (ModuleType[ModSel] == 2) {
 				//cout << "EventSize:" << EventSize << endl;
 				vector<int> temp_string;
-					while (EventCount < EventSize) {			
+					while (EventCount < EventSize) {
 						raw->read((char*)buff, sizeof(unsigned int));
 						// The actual existing data words are less than the event size
 						// reset the data and continue to search
@@ -555,7 +558,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 							EventCount = 0;
 							adc_Channel = -1;
 							cfd_Channel = -1;
-							
+
 							for (i = 0; i < 32; i++) {
 								adc_ch[i] = 0;
 								tdc_ch[i] = 0;
@@ -606,7 +609,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 									Ch = buff[0] >> 16 & 0x7f;
 									if (Ch < 32) { // adc value long intergration
 										adc_long_ch[Ch] = buff[0] & 0xffff;
-									
+
 										if (qdc_long_find[Ch]) {
 											Same_Channel2++;
 										}
@@ -696,7 +699,7 @@ bool MyMainFrame::restore_ROOT(string name) {
 							// 		cout << "tdc extend null!!!" << endl;
 							// 	}
 							// 	cout << "tdc: "<< tdc << " extend time stamp: " << time << " prev extend time stamp: " << prev_time << endl;
-								
+
 							// }
 						}
 						else{
@@ -722,8 +725,8 @@ bool MyMainFrame::restore_ROOT(string name) {
 	cout<< "SCP_ERROR: "<< std::dec <<SCP_ERROR<<endl;
 	cout<< "QDC_ERROR: "<< std::dec <<QDC_ERROR<<endl;
 	cout <<"timeNumber: " << std::dec<< timeNumber <<endl;
-	cout <<"Same_Channel: "<<std::dec<<Same_Channel<<endl; 
-	cout <<"Same_Channel2: "<<std::dec<<Same_Channel2<<endl; 
+	cout <<"Same_Channel: "<<std::dec<<Same_Channel<<endl;
+	cout <<"Same_Channel2: "<<std::dec<<Same_Channel2<<endl;
 	for (int nu1 =0 ; nu1<255;nu1++){
 		bool exist = false;
 		//The statistics of MDPP32-SCP
@@ -754,10 +757,127 @@ bool MyMainFrame::restore_ROOT(string name) {
 	raw->close();
 	fout->cd();
 	tree->Write("",TObject::kOverwrite);
-	//fout->Write();
+	fout->Write();
 	fout->Close();
 	return true;
 }
+#endif
+#if 1
+
+using namespace mesytec;
+using mesytec::mvlc::u32;
+
+// mdpp32_qdc
+//   channel time       0001 XXXX X01A AAAA DDDD DDDD DDDD DDDD
+//   integration long   0001 XXXX X00A AAAA DDDD DDDD DDDD DDDD
+//   integration short 	0001 XXXX X11A AAAA DDDD DDDD DDDD DDDD
+//   trigger time       0001 XXXX X100 000A DDDD DDDD DDDD DDDD
+//   timestamp:         11DD DDDD DDDD DDDD DDDD DDDD DDDD DDDD
+//   extended ts:  		0010 XXXX XXXX XXXX DDDD DDDD DDDD DDDD
+
+// mdpp32_scp
+//   amplitude          0001 XXXP O00A AAAA DDDD DDDD DDDD DDDD
+//   channel time       0001 XXXP O01A AAAA DDDD DDDD DDDD DDDD
+//   trigger time       0001 XXXX X100 000A DDDD DDDD DDDD DDDD
+//   timestamp          11DD DDDD DDDD DDDD DDDD DDDD DDDD DDDD
+//   extended ts        0010 XXXX XXXX XXXX DDDD DDDD DDDD DDDD
+
+// Passed to the readout parser callbacks. Put anything you need inside the
+// callback functions into this struct.
+struct MyUserContext
+{
+	MyMainFrame *uiMainFrame = nullptr;
+	mvlc::CrateConfig crateConfig;
+};
+
+void handle_one_module(MyUserContext *ctx, int crateIndex, int eventIndex, int moduleIndex,
+	mvlc::ModuleData moduleData)
+{
+	auto eventReadoutCommands = ctx->crateConfig.stacks[eventIndex];
+
+	fmt::print("  moduleIndex={}, moduleName={}, eventSize={} words\n",
+		moduleIndex, eventReadoutCommands.getGroup(moduleIndex).name, moduleData.dynamicSize);
+}
+
+void handle_readout_event(void *userContext_, int crateIndex, int eventIndex,
+	const mvlc::ModuleData *moduleDataList, unsigned moduleCount)
+{
+	fmt::print("readout_event: crateIndex={}, eventIndex={}, moduleCount={}\n",
+		crateIndex, eventIndex, moduleCount);
+
+	auto ctx = reinterpret_cast<MyUserContext *>(userContext_);
+
+	if (static_cast<size_t>(eventIndex) >= ctx->crateConfig.stacks.size())
+	{
+		fmt::print("Error: eventIndex {} out of range\n", eventIndex);
+		return;
+	}
+
+	for (unsigned moduleIndex=0; moduleIndex < moduleCount; ++moduleIndex)
+	{
+		auto moduleData = moduleDataList[moduleIndex];
+		handle_one_module(ctx, crateIndex, eventIndex, moduleIndex, moduleData);
+	}
+}
+
+void handle_system_event(void *userContext_, int crateIndex, const u32 *header, u32 size)
+{
+	auto ctx = reinterpret_cast<MyUserContext *>(userContext_);
+
+	fmt::print("system_event: crate{}, header={:#08x}, size={} words, type={}\n",
+		crateIndex, header[0], size, mvlc::decode_frame_header(header[0]));
+}
+
+bool MyMainFrame::restore_ROOT(string name) {
+
+	try
+	{
+		mvlc::readout_parser::ReadoutParserCallbacks callbacks =
+		{
+			handle_readout_event,
+			handle_system_event
+		};
+
+		MyUserContext ctx = {};
+
+		auto replay = mvlc::make_mvlc_replay(name, callbacks, &ctx);
+		auto crateConfig = replay.crateConfig();
+
+		ctx.uiMainFrame = this;
+		ctx.crateConfig = crateConfig;
+
+		std::cout << fmt::format(">>> Begin CrateConfig read from listfile {}:\n", name);
+		std::cout << mvlc::to_yaml(crateConfig) << "\n";
+		std::cout << fmt::format("<<< End CrateConfig\n");
+
+        // TODO: create trees and branches for events, modules and data arrays
+        // Store pointers to these objects in MyUserContext
+        // Use these pointers in the callback functions to fill the trees
+        // To be able to create the data arrays trees we need to know what kind
+        // of data is extracted and how that data is shaped.
+
+
+		if (auto ec = replay.start())
+		{
+			fmt::print("Error starting replay: {}\n", ec.message());
+			return false;
+		}
+
+		while (!replay.finished())
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+		auto parserCounters = replay.parserCounters();
+		mvlc::readout_parser::print_counters(std::cout, parserCounters);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return false;
+	}
+
+	return true;
+}
+#endif
 
 void MyMainFrame::DrawFile() {
 	if (!fCanvasFrame) {
@@ -775,7 +895,7 @@ void MyMainFrame::CanvasClosed(){
 	if(fCanvasFrame){
 		fCanvasFrame->Disconnect("CloseWindow()", "MyMainFrame", this, "CanvasClosed()");
 		fCanvasFrame = nullptr;
-		
+
 	}
 	return;
 }

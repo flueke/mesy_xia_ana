@@ -10,17 +10,20 @@ ROOTLDFLAGS  := $(shell root-config --ldflags)
 ROOTLIBS     := $(shell root-config --libs)
 ROOTGLIBS    := $(shell root-config --glibs)
 HASTHREAD    := $(shell root-config --has-thread)
+MESYTEC_MVLC := $(HOME)/local/mesytec-mvlc
+MESY_CFLAGS  := -I$(MESYTEC_MVLC)/include -I$(MESYTEC_MVLC)/include/mesytec-mvlc
+MESY_LIBS    := -L$(MESYTEC_MVLC)/lib -lmesytec-mvlc
 
 CXX           = g++
-CXXFLAGS      = -O -Wall -fPIC
+CXXFLAGS      = -O -Wall -fPIC -g
 LD            = g++
 LDFLAGS       = -O
 SOFLAGS       = -shared
 
-CXXFLAGS     += $(ROOTCFLAGS)
+CXXFLAGS     += $(ROOTCFLAGS) $(MESY_CFLAGS)
 LDFLAGS      += $(ROOTLDFLAGS)
-LIBS          = $(ROOTLIBS) $(SYSLIBS)
-GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
+LIBS          = $(ROOTLIBS) $(MESY_LIBS) $(SYSLIBS)
+GLIBS         = $(ROOTGLIBS) $(MESY_LIBS) $(SYSLIBS)
 
 #------------------------------------------------------------------------------
 

@@ -27,6 +27,7 @@ public:
 	MyMainFrame(const TGWindow* p, UInt_t w, UInt_t h);
 	virtual ~MyMainFrame();
 	void ExportFile();
+	bool restore_ROOT_v0(string name);
 	bool restore_ROOT(string name);
 	bool ClearFile();
 	void DrawFile();
