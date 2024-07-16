@@ -13,3 +13,5 @@ compile_commands.json
 *.o
 runGUI
 *.pcm
+MyMainFrameDict.cpp
+.rootmap
