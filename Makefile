@@ -10,8 +10,8 @@ ROOTLDFLAGS  := $(shell root-config --ldflags)
 ROOTLIBS     := $(shell root-config --libs)
 ROOTGLIBS    := $(shell root-config --glibs)
 HASTHREAD    := $(shell root-config --has-thread)
-#MESYTEC_MVLC := $(HOME)/local/mesytec-mvlc
-MESYTEC_MVLC := $(HOME)/local/mvme
+MESYTEC_MVLC := $(HOME)/local/mesytec-mvlc # Where to find the mesytec-mvlc library
+#MESYTEC_MVLC := $(HOME)/local/mvme
 MESY_CFLAGS  := -I$(MESYTEC_MVLC)/include -I$(MESYTEC_MVLC)/include/mesytec-mvlc
 MESY_LIBS    := -L$(MESYTEC_MVLC)/lib -lmesytec-mvlc
 
