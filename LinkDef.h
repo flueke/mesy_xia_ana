@@ -7,5 +7,6 @@
 #pragma link C++ class MyMainFrame;
 #pragma link C++ class CanvasFrame;
 #pragma link C++ class PictureFrame;
-#endif
 
+#pragma link C++ class MyExperiment+;
+#endif

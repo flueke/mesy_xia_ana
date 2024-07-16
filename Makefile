@@ -10,7 +10,8 @@ ROOTLDFLAGS  := $(shell root-config --ldflags)
 ROOTLIBS     := $(shell root-config --libs)
 ROOTGLIBS    := $(shell root-config --glibs)
 HASTHREAD    := $(shell root-config --has-thread)
-MESYTEC_MVLC := $(HOME)/local/mesytec-mvlc
+#MESYTEC_MVLC := $(HOME)/local/mesytec-mvlc
+MESYTEC_MVLC := $(HOME)/local/mvme
 MESY_CFLAGS  := -I$(MESYTEC_MVLC)/include -I$(MESYTEC_MVLC)/include/mesytec-mvlc
 MESY_LIBS    := -L$(MESYTEC_MVLC)/lib -lmesytec-mvlc
 
@@ -46,9 +47,13 @@ $(RUNGUI):      $(OBJECTS)
 .$(SrcSuf).$(ObjSuf):
 	$(CXX) $(CXXFLAGS) -c $<
 
+#MyMainFrameDict.$(SrcSuf): MyMainFrame.h CanvasFrame.h PictureFrame.h LinkDef.h
+#		@echo "Generating dictionary $@..."
+#		@rootcint -f $@ -c $^
+
 MyMainFrameDict.$(SrcSuf): MyMainFrame.h CanvasFrame.h PictureFrame.h LinkDef.h
-		@echo "Generating dictionary $@..."
-		@rootcint -f $@ -c $^
+	@echo "Generating dictionary $@..."
+	rootcling -f $@ -rml $@.so -rmf $@.rootmap $^
 
 clean:
 		rm -f *.o *Dict.*
