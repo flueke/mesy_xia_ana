@@ -12,6 +12,8 @@ compile_commands.json
 .cache/
 *.o
 runGUI
+runCLI
 *.pcm
-MyMainFrameDict.cpp
-.rootmap
+*Dict.cpp
+*.rootmap
+*.tar.gz
