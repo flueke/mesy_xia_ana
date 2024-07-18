@@ -236,7 +236,7 @@ void handle_one_module(MyUserContext *ctx, int crateIndex, int eventIndex, int m
 	auto eventReadoutCommands = ctx->crateConfig.stacks[eventIndex];
     auto moduleName = eventReadoutCommands.getGroup(moduleIndex).name;
 
- #ifndef NDEBUG
+ #if 0
 	fmt::print("  moduleIndex={}, moduleName={}, eventSize={} words\n",
 		moduleIndex, moduleName, moduleData.dynamicSize);
 
