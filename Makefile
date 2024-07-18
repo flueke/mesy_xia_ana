@@ -13,6 +13,7 @@ HASTHREAD    := $(shell root-config --has-thread)
 
 # Remember to also set LD_LIBRARY_PATH so that ld can find the lib at runtime.
 MESYTEC_MVLC := /usr/local/mesytec-mvlc
+MESYTEC_MVLC := /home/florian/local/mvme
 
 # Force c++17 for now. The ROOT binaries for ubuntu-20.04 will complain because
 # they are built with c++14 support only. No issues so far, the output file
@@ -34,37 +35,40 @@ GLIBS         = $(ROOTGLIBS) $(MESY_LIBS) $(SYSLIBS)
 
 #------------------------------------------------------------------------------
 
-SOURCES     := $(wildcard *.$(SrcSuf)) MyMainFrameDict.$(SrcSuf)
+SOURCES     := CanvasFrame.cpp PictureFrame.cpp MyMainFrame.cpp MyMainFrameDict.cpp my_experiment.cpp MyExperimentDict.cpp
 OBJECTS     := $(SOURCES:.$(SrcSuf)=.$(ObjSuf))
-RUNGUI        = runGUI$(ExeSuf)
+RUNGUI       = runGUI$(ExeSuf)
+RUNCLI       = runCLI$(ExeSuf)
 
 OBJS          = $(OBJECTS)
 
-PROGRAMS      = $(RUNGUI)
+PROGRAMS      = $(RUNGUI) $(RUNCLI)
 
 .SUFFIXES: .$(SrcSuf) .$(ObjSuf) .$(DllSuf)
 
 all:            $(PROGRAMS)
 
-$(RUNGUI):      $(OBJECTS)
+$(RUNGUI): $(OBJECTS) test.o
+		$(LD) $(LDFLAGS) $(CXXFLAGS) $^ $(GLIBS) $(OutPutOpt)$@
+		@echo "$@ done"
+
+$(RUNCLI): runcli_main.o my_experiment.o MyExperimentDict.o
 		$(LD) $(LDFLAGS) $^ $(GLIBS) $(OutPutOpt)$@
 		@echo "$@ done"
 
 .$(SrcSuf).$(ObjSuf):
 	$(CXX) $(CXXFLAGS) -c $<
 
-#MyMainFrameDict.$(SrcSuf): MyMainFrame.h CanvasFrame.h PictureFrame.h LinkDef.h
-#		@echo "Generating dictionary $@..."
-#		@rootcint -f $@ -c $^
-
-# The modern version of rootcint. This is probably the way to go, instead of
-# still using rootcint.
 MyMainFrameDict.$(SrcSuf): MyMainFrame.h CanvasFrame.h PictureFrame.h LinkDef.h
-	@echo "Generating dictionary $@..."
-	rootcling -f $@ -rml $@.so -rmf $@.rootmap $^
+		@echo "Generating dictionary $@..."
+		@rootcint -f $@ -c $^
+
+MyExperimentDict.$(SrcSuf): my_experiment.h my_experiment_LinkDef.h
+		@echo "Generating dictionary $@..."
+		@rootcint -f $@ -c $^
 
 clean:
-		rm -f *.o *Dict.*
+		rm -f *.o *Dict.* *.pcm
 
 distclean:		clean
 		rm -f $(PROGRAMS)

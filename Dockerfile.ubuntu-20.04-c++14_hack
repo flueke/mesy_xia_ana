@@ -13,35 +13,41 @@
 
 FROM ubuntu:20.04
 
+SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV TZ="Etc/UTC"
 ENV MVLC_SOURCES="/mesytec-mvlc-sources"
 ENV MVLC_INSTALL="/usr/local/mesytec-mvlc"
+
 # Path to the local root archive. Download it manually from https://root.cern/download/${ROOT_ARCHIVE}
-ENV ROOT_ARCHIVE="root_v6.26.16.Linux-ubuntu20-x86_64-gcc9.4.relwithdebinfo.tar.gz"
+ENV ROOT_ARCHIVE="root_v6.26.16.Linux-ubuntu20-x86_64-gcc9.4.tar.gz"
 
 # Add the kitware apt repository to get a modern version of cmake https://apt.kitware.com/
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates gpg wget sudo \
     && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
     && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
 
-# deps
+# deps for mesytec-mvlc
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates build-essential git cmake ninja-build zlib1g-dev
+
+# more deps for root
+RUN apt-get install -y --no-install-recommends \
+    libfreetype6 libtbb-dev libx11-6 libxext6 libxpm4 libxft2
 
 # mesytec-mvlc
 RUN git clone https://github.com/flueke/mesytec-mvlc ${MVLC_SOURCES}
 WORKDIR ${MVLC_SOURCES}/build
 RUN cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=${MVLC_INSTALL} ${MVLC_SOURCES} \
-    && ninja && ctest. && ninja install
+    && ninja && ctest . && ninja install
 
-# install root into /usr/local/root
-WORKDIR /
-COPY ./${ROOT_ARCHIVE} /
-RUN tar xf ${ROOT_ARCHIVE} -C /usr/local
-
-# our code
+# copy our source code and install ROOT into /usr/local/root
 COPY . /sources
-WORKDIR /build
+WORKDIR /sources
+RUN pwd && ls -l && tar xf ${ROOT_ARCHIVE} -C /usr/local
+
+# build our code
+WORKDIR /sources
 ENV LD_LIBRARY_PATH=${MVLC_INSTALL}/lib
-RUN source /usr/local/root/bin/thisroot.sh && make -C build clean && make -C build
+RUN source /usr/local/root/bin/thisroot.sh && make clean && make
+CMD /sources/runGUI
