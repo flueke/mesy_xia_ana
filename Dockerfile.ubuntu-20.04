@@ -1,8 +1,12 @@
 # syntax=docker/dockerfile:1.5
 # vim:ft=dockerfile
 
-# Dockerfile building the mesytec-mvlc library in debug mode and running the
-# libraries unit tests.
+# Dockerfile showing how to install the mesytec-mvlc library under ubuntu-20.04
+# and using it with ROOT to write MVLC readout data to ROOT TTress.
+
+# Before running docker:
+# - Download a ROOT binary for ubuntu-20.04 from https://root.cern/download/${ROOT_ARCHIVE}
+
 
 # Example docker build invocation from the root of the source tree:
 #   DOCKER_BUILDKIT=1 docker build  -f ./tools/dockerfiles/Dockerfile.debian-stable_ctest .

@@ -6,7 +6,9 @@ ROOTPREFIX  =   $(shell root-config --prefix)
 # Set this to the installation path of mesytec-mvlc. Remember to also set
 # LD_LIBRARY_PATH so that ld can find the lib at runtime.
 MESYTEC_MVLC := /usr/local/mesytec-mvlc
+# If mvme is installed its path can also be used to find the mesytec-mvlc lib.
 #MESYTEC_MVLC := /home/florian/local/mvme
+
 MESY_CFLAGS  := -I$(MESYTEC_MVLC)/include -I$(MESYTEC_MVLC)/include/mesytec-mvlc
 MESY_LIBS    := -L$(MESYTEC_MVLC)/lib -lmesytec-mvlc
 
@@ -29,12 +31,18 @@ all: print_root_version runCLI
 EXP_HEADERS = MyExperiment.h MyExperiment_LinkDef.h
 EXP_DEPS    = MyExperiment.cpp $(EXP_HEADERS)
 
+# Dictionary code generation. rootcling is the modern variant of rootcint.
 MyExperiment_rdict.cxx: $(EXP_DEPS)
 	rootcling -f $@ -rml libMyExperiment.so -rmf MyExperiment.rootmap $(EXP_HEADERS)
 
+# Create a shared library which inclues the generated ROOT dictionary code. This
+# way we have to generated code in one place and not linked into multiple binaries.
 libMyExperiment.so: $(EXP_DEPS) MyExperiment_rdict.cxx
 	$(CXX) $(ROOTCFLAGS) $(CXXFLAGS) $(ROOTLIBS) -shared -fPIC -o $@ $^ $(MESY_LIBS)
 
+# Build the command line tool. rpath is used to help ld find the libs at runtime
+# without having to modify the system ld.so.conf file. Check `ldd runCLI` to see
+# the paths. This allows you to execute runCLI from any directory.
 runCLI: runcli_main.cpp libMyExperiment.so
 	$(CXX) $(LDFLAGS) $(ROOTCFLAGS) $(CXXFLAGS) $< '-Wl,-rpath,$$ORIGIN/:$$ORIGIN/../lib' libMyExperiment.so $(ROOTLIBS) -o $@
 
@@ -44,64 +52,3 @@ clean:
 
 print_root_version:
 	@echo "Compiling against ROOT-${ROOTVERSION} found in ${ROOTPREFIX}"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Wildcard does not work anymore because of multiple main() functions. Manually
-## specifying the files is better anyways.
-#SOURCES     := CanvasFrame.cpp MyMainFrame.cpp PictureFrame.cpp MyMainFrameDict.$(SrcSuf) my_experiment.cpp MyExperimentDict.cpp
-#OBJECTS     := $(SOURCES:.$(SrcSuf)=.$(ObjSuf))
-#RUNGUI        = runGUI$(ExeSuf)
-#RUNCLI       = runCLI$(ExeSuf)
-#
-#OBJS          = $(OBJECTS)
-#
-#PROGRAMS      = $(RUNGUI) $(RUNCLI)
-#
-#.SUFFIXES: .$(SrcSuf) .$(ObjSuf) .$(DllSuf)
-#
-#all:            $(PROGRAMS)
-#
-#$(RUNGUI): $(OBJECTS) test.o
-#		$(LD) $(LDFLAGS) $^ $(GLIBS) $(OutPutOpt)$@
-#		@echo "$@ done"
-#
-#$(RUNCLI):  $(OBJECTS) runcli_main.o
-#		$(LD) $(LDFLAGS) $^ $(GLIBS) $(OutPutOpt)$@
-#		@echo "$@ done"
-#
-#.$(SrcSuf).$(ObjSuf):
-#	$(CXX) $(CXXFLAGS) -c $<
-#
-#MyMainFrameDict.$(SrcSuf): MyMainFrame.h my_experiment.h CanvasFrame.h PictureFrame.h LinkDef.h
-#	@echo "Generating dictionary $@..."
-#	rootcint -f $@ -c $^
-#
-##MyExperimentDict.$(SrcSuf): my_experiment.h MyMainFrame.h CanvasFrame.h PictureFrame.h my_experiment_LinkDef.h
-##	@echo "Generating dictionary $@..."
-##	rootcint -f $@ -c $^
-#
-#.PHONY: all clean distclean print_root_version
-#
-#clean:
-#		rm -f *.o *Dict.* *.pcm
-#
-#distclean:		clean
-#		rm -f $(PROGRAMS)
-#
-#print_root_version:
-#	@echo "Compiling against ROOT-${ROOTVERSION} found in ${ROOTPREFIX}"
-#
