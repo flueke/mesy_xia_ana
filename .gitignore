@@ -17,3 +17,5 @@ runCLI
 *Dict.cpp
 *.rootmap
 *.tar.gz
+*_rdict.cxx
+*.so
