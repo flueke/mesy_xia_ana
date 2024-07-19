@@ -8,6 +8,8 @@
 
 using namespace mesytec;
 
+// Helpers for extracting address and data values.
+
 struct FilterWithCache
 {
 	mvlc::DataFilter filter;
@@ -90,7 +92,7 @@ void fill_mdpp32_qdc_data(MDPP32_QDC_Data &dest, const std::uint32_t *data, size
 
     // Start from a clean state. Non-float values are set to 0, float values
     // are set to NaN initially. The NaNs are used to indicate that no value
-    // was present in the current event.
+    // was present in the current event for the respective index.
 	std::memset(&dest, 0, sizeof(dest));
 	std::fill(std::begin(dest.channelTime), std::end(dest.channelTime), std::numeric_limits<float>::quiet_NaN());
 	std::fill(std::begin(dest.integrationLong), std::end(dest.integrationLong), std::numeric_limits<float>::quiet_NaN());
@@ -144,6 +146,7 @@ MyExperiment::MyExperiment()
 	: TObject()
 {
 	// Module fill functions by module index. handle_one_module() calls these.
+	// This needs to be updated when the mvme VME config changes!
 	moduleFillFunctions =
 	{
 		[] (MyExperiment &exp, unsigned moduleIndex, const std::uint32_t *data, size_t dataSize)
@@ -236,7 +239,8 @@ void handle_one_module(MyUserContext *ctx, int crateIndex, int eventIndex, int m
 	auto eventReadoutCommands = ctx->crateConfig.stacks[eventIndex];
     auto moduleName = eventReadoutCommands.getGroup(moduleIndex).name;
 
- #if 0
+ #if 1
+	// Verbose printing of extracted module data.
 	fmt::print("  moduleIndex={}, moduleName={}, eventSize={} words\n",
 		moduleIndex, moduleName, moduleData.dynamicSize);
 
@@ -244,14 +248,18 @@ void handle_one_module(MyUserContext *ctx, int crateIndex, int eventIndex, int m
         fmt::format("readout data of module {}", moduleName));
 #endif
 
+	// Lookup the fill function by moduleIndex, then call it passing in the raw module data buffer.
 	if (static_cast<size_t>(moduleIndex) < ctx->experiment.moduleFillFunctions.size())
 	{
 		auto &fillFunction = ctx->experiment.moduleFillFunctions[moduleIndex];
 		fillFunction(ctx->experiment, moduleIndex, moduleData.data.data, moduleData.data.size);
 	}
-	// else if the index is out of range it is the "readout end" script
+	// Else if the index is out of range it is the "readout end" script or new
+	// modules have been added to the mvme config and this code needs to be
+	// udpated.
 }
 
+// Called for every event extracted from the input listfile.
 void handle_readout_event(void *userContext_, int crateIndex, int eventIndex,
 	const mvlc::ModuleData *moduleDataList, unsigned moduleCount)
 {
@@ -277,6 +285,8 @@ void handle_readout_event(void *userContext_, int crateIndex, int eventIndex,
 	ctx->outputTree->Fill();
 }
 
+// System events contain configuration information, DAQ start/stop/pause/resume
+// info and periodic wallclock timeticks. These are just printed for now.
 void handle_system_event(void *userContext_, int crateIndex, const std::uint32_t *header, std::uint32_t size)
 {
 	auto ctx = reinterpret_cast<MyUserContext *>(userContext_);
@@ -289,9 +299,14 @@ bool process_one_listfile(const std::string &inputFilename)
 {
 	try
 	{
+		// Opens the file, reads configuration data and creates a fresh MVLCReplay instance.
 		auto replay = mvlc::make_mvlc_replay(inputFilename);
+
+		// This is the mesytec-mvlc library CrateConfig that was written by mvme
+		// when the listfile was created.
 		auto crateConfig = replay.crateConfig();
 
+		// Print out the YAML CrateConfig data.
 		std::cout << fmt::format(">>> Begin CrateConfig read from listfile {}:\n", inputFilename);
 		std::cout << mvlc::to_yaml(crateConfig) << "\n";
 		std::cout << fmt::format("<<< End CrateConfig\n");
@@ -299,12 +314,15 @@ bool process_one_listfile(const std::string &inputFilename)
 		auto rootOutputFilename = std::filesystem::path(inputFilename).replace_extension(".root").string();
 		fmt::print("Creating ROOT output file: {}\n", rootOutputFilename);
 
+		// Initialize our local context object. This is the 'userContext' for
+		// the readout_parser component.
 		MyUserContext ctx = {};
 		ctx.crateConfig = crateConfig;
 		ctx.rootOutFile = new TFile(rootOutputFilename.c_str(), "RECREATE");
 		ctx.outputTree = new TTree("event0", "event0");
 		ctx.outputTree->Branch("MyExperiment", &ctx.experiment, 32000, 2);
 
+		// Setup the callbacks for the readout parser.
 		mvlc::readout_parser::ReadoutParserCallbacks callbacks =
 		{
 			handle_readout_event,
@@ -313,28 +331,37 @@ bool process_one_listfile(const std::string &inputFilename)
 
         replay.setParserCallbacks(callbacks, &ctx);
 
+		// Start the replay. This processes data in its own threads.
 		if (auto ec = replay.start())
 		{
 			fmt::print("Error starting replay: {}\n", ec.message());
 			return false;
 		}
 
+		// Periodically check if the replay is done. When writing a GUI this
+		// could be done using a timer.
 		while (!replay.finished())
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
+        // Print final parser counters. This information is also available in
+        // the mvme analysis under 'Debug & Stats'.
         fmt::print("Replay is done. Final parser counters:\n");
 		auto parserCounters = replay.parserCounters();
 		mvlc::readout_parser::print_counters(std::cout, parserCounters);
 
+		// Flush output data.
 		fmt::print("Closing output tree and file\n");
 		ctx.outputTree->Write("",TObject::kOverwrite);
 		ctx.rootOutFile->Write();
+		ctx.rootOutFile->Close();
 		fmt::print("Output tree and file closed.\n");
 
         return true;
 	}
 	catch(const std::exception& e)
 	{
+		// Some parts of mesytec-mvlc still throw. Exceptions are slowly being
+		// phased out though.
         std::cerr << fmt::format("Error replaying data from {}: {}\n", inputFilename, e.what());
 		return false;
 	}

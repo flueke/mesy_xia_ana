@@ -6,6 +6,10 @@
 #include <cstdint>
 #include <functional>
 
+// The bit filters where copied from the mvme default filters for the respective
+// module. Timestamp handling works for both the standard and extended
+// timestamps.
+
 // mdpp32_qdc
 //   channel time       0001 XXXX X01A AAAA DDDD DDDD DDDD DDDD
 //   integration long   0001 XXXX X00A AAAA DDDD DDDD DDDD DDDD
@@ -43,6 +47,7 @@ struct MyExperiment;
 
 using FillFunction = std::function<void (MyExperiment &exp, unsigned moduleIndex, const std::uint32_t *data, size_t dataSize)>;
 
+// The full experiment containing all the modules defined in 'event0' in mvme.
 struct MyExperiment: public TObject
 {
     MDPP32_QDC_Data MDPP32_QDCTOF1TOF2;
@@ -72,6 +77,7 @@ struct MyExperiment: public TObject
     ClassDef(MyExperiment, 1);
 };
 
+// Main entry point for processing one input .zip listfile archive.
 bool process_one_listfile(const std::string &inputFilename);
 
 #endif /* F49FE770_A261_4ACB_8239_A9F1729833EC */

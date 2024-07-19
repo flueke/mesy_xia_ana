@@ -1,10 +1,10 @@
-# mesytec-mvlc listfile to TTree
+# mesytec-mvlc listfile to ROOT TTree for Xiaokang Xia
 
 This is example code showing how to use mesytec-mvlc to read a listfile, extract
 contained data and write data to a ROOT TTree. Docker is used to make it easy to
 test with different ubuntu and/or ROOT versions.
 
-### Changes from the original code
+## Changes from the original code
 
 * GUI code is disabled for now, only the runCLI tool remains. I had issues
   correctly building the ROOT dictionary so I removed everything that's not
@@ -18,7 +18,7 @@ test with different ubuntu and/or ROOT versions.
   ubuntu-20.04.
 
 
-### Using the example
+## Using the example
 
   git clone https://github.com/flueke/mesy_xia_ana
   cd mesy_xia_ana
@@ -40,3 +40,30 @@ out a lot of debug information and write sthe output .root file.
 
 Look at the Dockerfile for detailed commands needed to get the same to work on a
 ubuntu-20.04 machine.
+
+## How it works
+
+The mesytec-mvlc library reads the MVLC CrateConfig from the .zip listfile. This
+is used to construct a 'replay' instance which can parse the listfile. Callbacks
+are invoked by the library for each event read from the listfile. Within the
+callbacks module data is extracted (amplitudes, timings, timestamps, etc.) using
+bit-level filters, similar to the ones in mvme.
+
+Module assignment is static for now, you have to write you own configuration if
+your mvme VME config changes (see MyExperiment::MyExperiment()).
+
+### Customization and further development
+
+The structures MDPP32_QDC_Data and MDPP32_SCP_Data can be modified. For example
+you do not have to extract all channels if you don't need them. If the
+structures are changed you also have to update the fill_mdpp32_scp_data()
+fill_mdpp32_qdc_data() functions.
+
+The module fill function assignment in MyExperiment::MyExperiment() is very
+ugly. Also it only works for this exact structure, so if you add/remove modules
+from your VMEConfig you have to adapt the MyExperiment code. I will start work
+on another library soon, to make data extraction simpler.
+
+### Contact Info
+
+Florian Lüke <f.lueke@mesytec.com> 2024
