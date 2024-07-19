@@ -41,6 +41,9 @@ out a lot of debug information and write sthe output .root file.
 Look at the Dockerfile for detailed commands needed to get the same to work on a
 ubuntu-20.04 machine.
 
+Also see the screenshot rootbrowse_run117.png for how the file looks when opened
+with 'rootbrowse'.
+
 ## How it works
 
 The mesytec-mvlc library reads the MVLC CrateConfig from the .zip listfile. This
