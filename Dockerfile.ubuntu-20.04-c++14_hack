@@ -50,4 +50,5 @@ RUN pwd && ls -l && tar xf ${ROOT_ARCHIVE} -C /usr/local
 WORKDIR /sources
 ENV LD_LIBRARY_PATH=${MVLC_INSTALL}/lib
 RUN source /usr/local/root/bin/thisroot.sh && make clean && make
-CMD /sources/runGUI
+
+CMD /sources/runCLI

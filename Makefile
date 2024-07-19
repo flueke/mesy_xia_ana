@@ -5,8 +5,8 @@ ROOTPREFIX  =   $(shell root-config --prefix)
 
 # Set this to the installation path of mesytec-mvlc. Remember to also set
 # LD_LIBRARY_PATH so that ld can find the lib at runtime.
-#MESYTEC_MVLC := /usr/local/mesytec-mvlc
-MESYTEC_MVLC := /home/florian/local/mvme
+MESYTEC_MVLC := /usr/local/mesytec-mvlc
+#MESYTEC_MVLC := /home/florian/local/mvme
 MESY_CFLAGS  := -I$(MESYTEC_MVLC)/include -I$(MESYTEC_MVLC)/include/mesytec-mvlc
 MESY_LIBS    := -L$(MESYTEC_MVLC)/lib -lmesytec-mvlc
 
@@ -38,7 +38,6 @@ libMyExperiment.so: $(EXP_DEPS) MyExperiment_rdict.cxx
 runCLI: runcli_main.cpp libMyExperiment.so
 	$(CXX) $(LDFLAGS) $(ROOTCFLAGS) $(CXXFLAGS) $< '-Wl,-rpath,$$ORIGIN/:$$ORIGIN/../lib' libMyExperiment.so $(ROOTLIBS) -o $@
 
-# TODO: clean the pcm file
 clean:
 	-rm -f libMyExperiment.so MyExperiment_rdict.cxx *.pcm
 	-rm -f runCLI runGUI MyExperiment.rootmap
