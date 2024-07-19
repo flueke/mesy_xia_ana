@@ -25,8 +25,8 @@ test with different ubuntu and/or ROOT versions.
   wget https://root.cern/download/root_v6.26.16.Linux-ubuntu20-x86_64-gcc9.4.tar.gz
   docker build -f Dockerfile.ubuntu-20.04 --progress plain -t xia-offline-ana .
   mkdir ~/data
-  wget https://www.mesytec.com/kundendaten/Xiaokang.Xia/AR31DECAY20240708run117.zip ~/data
-  docker run -v /data/:~/data:rw -it --rm xia-offline-ana /sources/runCLI /data/AR31DECAY20240708run117.zip
+  wget https://www.mesytec.com/kundendaten/Xiaokang.Xia/AR31DECAY20240708run117.zip -P ~/data
+  docker run -v ~/data/:/data:rw -it --rm xia-offline-ana /sources/runCLI /data/AR31DECAY20240708run117.zip
 
 With the above commands you get a docker image called 'xia-offline-ana'. This
 image contains the downloaded ROOT installation and the executable
