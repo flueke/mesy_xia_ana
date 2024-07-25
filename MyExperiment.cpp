@@ -70,12 +70,16 @@ void fill_mdpp32_scp_data(MDPP32_SCP_Data &dest, const std::uint32_t *data, size
 		else if (mvlc::matches(fTimeStamp.filter, *wordPtr))
 		{
 			// 30 low bits of the timestamp
-			dest.timestamp |= mvlc::extract(fTimeStamp.dataCache, *wordPtr);
+			auto value = mvlc::extract(fTimeStamp.dataCache, *wordPtr);
+			//spdlog::info("timestamp matched (30 low bits): 0b{:030b}, 0x{:08x}", value, value);
+			dest.timestamp |= value;
 		}
 		else if (mvlc::matches(fExtentedTs.filter, *wordPtr))
 		{
 			// optional 16 high bits of the extended timestamp if enabled
-			dest.timestamp |= mvlc::extract(fExtentedTs.dataCache, *wordPtr) << 30;
+			auto value = mvlc::extract(fExtentedTs.dataCache, *wordPtr);
+			//spdlog::info("extended timestamp matched (16 high bits): 0b{:016b}, 0x{:08x}", value, value);
+			dest.timestamp |= static_cast<std::uint64_t>(value) << 30;
 		}
 	}
 }
@@ -132,12 +136,16 @@ void fill_mdpp32_qdc_data(MDPP32_QDC_Data &dest, const std::uint32_t *data, size
 		else if (mvlc::matches(fTimeStamp.filter, *wordPtr))
 		{
 			// 30 low bits of the timestamp
-			dest.timestamp |= mvlc::extract(fTimeStamp.dataCache, *wordPtr);
+			auto value = mvlc::extract(fTimeStamp.dataCache, *wordPtr);
+			//spdlog::info("timestamp matched (30 low bits): 0b{:030b}, 0x{:08x}", value, value);
+			dest.timestamp |= value;
 		}
 		else if (mvlc::matches(fExtentedTs.filter, *wordPtr))
 		{
 			// optional 16 high bits of the extended timestamp if enabled
-			dest.timestamp |= mvlc::extract(fExtentedTs.dataCache, *wordPtr) << 30;
+			auto value = mvlc::extract(fExtentedTs.dataCache, *wordPtr);
+			//spdlog::info("extended timestamp matched (16 high bits): 0b{:016b}, 0x{:08x}", value, value);
+			dest.timestamp |= static_cast<std::uint64_t>(value) << 30;
 		}
 	}
 }
@@ -289,7 +297,9 @@ void handle_readout_event(void *userContext_, int crateIndex, int eventIndex,
 // info and periodic wallclock timeticks. These are just printed for now.
 void handle_system_event(void *userContext_, int crateIndex, const std::uint32_t *header, std::uint32_t size)
 {
-	auto ctx = reinterpret_cast<MyUserContext *>(userContext_);
+	// Downcast of the context object if acces to it is needed. Careful as
+	// handle_system_event() is invoked from within the readout_parser thread!.
+	//auto ctx = reinterpret_cast<MyUserContext *>(userContext_);
 
 	fmt::print("system_event: crate{}, header={:#08x}, size={} words, type={}\n",
 		crateIndex, header[0], size, mvlc::decode_frame_header(header[0]));
