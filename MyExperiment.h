@@ -72,7 +72,7 @@ struct MyExperiment: public TObject
     std::vector<FillFunction> moduleFillFunctions;
 
     MyExperiment();
-    ~MyExperiment() override;
+    ~MyExperiment();
 
     ClassDef(MyExperiment, 1);
 };
