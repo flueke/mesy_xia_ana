@@ -45,7 +45,8 @@ struct MDPP32_SCP_Data
 
 struct MyExperiment;
 
-using FillFunction = std::function<void (MyExperiment &exp, unsigned moduleIndex, const std::uint32_t *data, size_t dataSize)>;
+using FillFunction = std::function<void (
+    MyExperiment &exp, unsigned moduleIndex, const std::uint32_t *data, size_t dataSize)>;
 
 // The full experiment containing all the modules defined in 'event0' in mvme.
 struct MyExperiment: public TObject
@@ -69,7 +70,7 @@ struct MyExperiment: public TObject
     MDPP32_QDC_Data MDPP_32QDCBGO;
 
     // Module fill functions by module index. handle_one_module() calls these.
-    std::vector<FillFunction> moduleFillFunctions;
+    std::vector<FillFunction> moduleFillFunctions; // ! Do not serialize this.
 
     MyExperiment();
     ~MyExperiment();
