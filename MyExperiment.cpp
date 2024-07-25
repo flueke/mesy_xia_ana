@@ -361,8 +361,8 @@ bool process_one_listfile(const std::string &inputFilename)
 
 		// Flush output data.
 		fmt::print("Closing output tree and file\n");
+		ctx.rootOutFile->cd();
 		ctx.outputTree->Write("",TObject::kOverwrite);
-		ctx.rootOutFile->Write();
 		ctx.rootOutFile->Close();
 		fmt::print("Output tree and file closed.\n");
 
